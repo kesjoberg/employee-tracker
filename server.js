@@ -1,8 +1,31 @@
+const express = require('express');
+// Import and require mysql2
+const mysql = require('mysql2');
+
 const inquirer = require('inquirer');
 const fs = require('fs');
+const cTable = require('console.table');
 // const { allowedNodeEnvironmentFlags } = require('process');
 
-const team =[];
+const PORT = process.env.PORT || 3001;
+const app = express();
+
+// Express middleware
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
+
+// Connect to database
+const db = mysql.createConnection(
+  {
+    host: 'localhost',
+    user: 'root',
+    password: 'root2021',
+    database: 'tracker_db'
+  },
+  console.log(`Connected to the tracker_db database.`)
+);
+
+// const team =[];
 
 const startQuestions = () =>{
   inquirer
@@ -15,7 +38,7 @@ const startQuestions = () =>{
     }
     ])
     .then(response => {
-      switch(response){
+      switch(response.start){
         case 'View All Employees':
           viewAllEmployees();
           break;
@@ -44,7 +67,14 @@ const startQuestions = () =>{
     })   
 }
 const viewAllEmployees = () =>{
-
+  db.query(`SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name, role.salary, CASE WHEN manager_id IS NOT NULL THEN (SELECT CONCAT(first_name, ' ', last_name) FROM employee E2 WHERE e2.id=employee.manager_id) WHEN manager_id IS NULL THEN "Self" END AS "Manager"
+  FROM employee
+  JOIN role ON employee.role_id = role.id
+  JOIN department ON role.department_id = department.id;`, (err, result) => {
+    console.table(result);
+    
+    startQuestions();
+  })
 };
 
 const addEmployee = () =>{
@@ -102,16 +132,20 @@ const updateEmployeeRole = () =>{
 };
 
 const viewAllRoles = () =>{
-
+  db.query(`SELECT role.id, role.title, department.name, role.salary FROM role JOIN department ON role.department_id = department.id;`, (err, result) => {
+    console.table(result);
+    
+    startQuestions();
+  })
 };
 
 const addRole = () =>{
+  db.query(`SELECT name, id as value FROM department ORDER BY id`, (err, results) =>{
   inquirer
     .prompt([
     {
-      type: 'list',
+      type: 'input',
       message: " What is the name of the role?",
-      choices: [],
       name: 'title',
     },
     {
@@ -122,18 +156,30 @@ const addRole = () =>{
     {
       type: 'list',
       message:   "Which department does the role belong to?",
-      choices:[],
+      choices:[...results],
       name: 'department',
     }
     ])
     .then(response => {
+      db.query("INSERT INTO role(title, salary, department_id) VALUES(?, ?, ?)", [response.title, response.salary, response.department], (err, res) =>{
+        if (err) console.log(err);
+        console.log('Role Added');
+        console.log('------------------');
+
+        startQuestions()
+      })
       
-      startQuestions()
-    })   
-}
+    }) 
+  })   
+};
 
 const viewAllDepartments = () =>{
-
+  console.log('View All Departments')
+  db.query('SELECT * FROM department', (err, result) => {
+    console.table(['id', 'name'], result);
+    
+    startQuestions();
+  })
 };
 
 const addDepartment = () =>{
