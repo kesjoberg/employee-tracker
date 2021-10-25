@@ -11,3 +11,11 @@ JOIN department ON role.department_id = department.id;
 SELECT role.id, role.title, department.name, role.salary
 FROM role
 JOIN department ON role.department_id = department.id;
+
+-- Query for View All Departments
+SELECT id, name FROM department;
+
+-- Query for listing managers
+SELECT CONCAT(first_name,' ',last_name) as "Manager", id as value
+FROM employee
+WHERE employee.manager_id IS NULL

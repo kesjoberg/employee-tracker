@@ -3,8 +3,9 @@ const express = require('express');
 const mysql = require('mysql2');
 
 const inquirer = require('inquirer');
-const fs = require('fs');
 const cTable = require('console.table');
+
+const Queries = require('./lib/Queries')
 // const { allowedNodeEnvironmentFlags } = require('process');
 
 const PORT = process.env.PORT || 3001;
@@ -63,9 +64,9 @@ const startQuestions = () =>{
         case 'Quit':
           endQuestions();
           break;
-      }
-    })   
-}
+      };
+    });   
+};
 const viewAllEmployees = () =>{
   db.query(`SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name, role.salary, CASE WHEN manager_id IS NOT NULL THEN (SELECT CONCAT(first_name, ' ', last_name) FROM employee E2 WHERE e2.id=employee.manager_id) WHEN manager_id IS NULL THEN "Self" END AS "Manager"
   FROM employee
@@ -77,36 +78,42 @@ const viewAllEmployees = () =>{
   })
 };
 
+
+
 const addEmployee = () =>{
-  inquirer
-    .prompt([
-    {
-      type: 'input',
-      message: " What is the employee's first name?",
-      name: 'first_name',
-    },
-    {
-      type: 'input',
-      message: "What is the employee's last name?",
-      name: 'last_name',
-    },
-    {
-      type: 'list',
-      message: "What is the employee's role?",
-      choices: [],
-      name: 'title',
-    },
-    {
-      type: 'list',
-      message: "Who is the employee's manager? (Respond 'None' if this employee is the manager)",
-      choices: [],
-      name: 'manager',
-    },
-    ])
-    .then(response => {
-      
-      startQuestions();
-    })   
+  db.query(`SELECT title, id as value FROM role`, (err, results) =>{
+    inquirer
+      .prompt([
+      {
+        type: 'input',
+        message: " What is the employee's first name?",
+        name: 'first_name',
+      },
+      {
+        type: 'input',
+        message: "What is the employee's last name?",
+        name: 'last_name',
+      },
+      {
+        type: 'list',
+        message: "What is the employee's role?",
+        choices: [],
+        name: 'title',
+      },
+      {
+        type: 'list',
+        message: "Who is the employee's manager? (Respond 'None' if this employee is the manager)",
+        choices: [],
+        name: 'manager',
+      },
+      ])
+      .then(response => {
+        db.query("INSERT INTO employee(first_name, last_name, role_id,manager_id) VALUES(?, ?, ?, ?)", [response.first_name, response.last_name, response.title, response.manager], (err, res) =>{
+          if (err) console.log(err);
+        askQuestions();
+      })  
+    })
+  })  
 }
 
 const updateEmployeeRole = () =>{
@@ -141,6 +148,7 @@ const viewAllRoles = () =>{
 
 const addRole = () =>{
   db.query(`SELECT name, id as value FROM department ORDER BY id`, (err, results) =>{
+    console.log(results);
   inquirer
     .prompt([
     {
@@ -174,9 +182,9 @@ const addRole = () =>{
 };
 
 const viewAllDepartments = () =>{
-  console.log('View All Departments')
-  db.query('SELECT * FROM department', (err, result) => {
-    console.table(['id', 'name'], result);
+  console.log('----All Departments-----')
+  db.query('SELECT id, name FROM department', (err, result) => {
+    console.table(result);
     
     startQuestions();
   })
@@ -202,7 +210,10 @@ const addDepartment = () =>{
 
 const endQuestions =() =>{
   
-  console.log('Thank you for using Team Tracker to manage your employees!')
+  console.log(`
+  ==========================================================
+  Thank you for using Team Tracker to manage your employees!
+  ==========================================================`)
 }
 
 
