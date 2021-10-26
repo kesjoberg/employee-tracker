@@ -33,6 +33,8 @@ If you have any questions, please contact me at sjobergkarna@gmail.com or on Git
 ## Screenshot of my deployed paged
 ![Screenshot of a working page from example](./assets/employee_tracker_screenshot.jpg)
 
+## Link to video demo of my project
+https://watch.screencastify.com/v/JDmBnuizdgnDxwhtuDxC
 
 ## Link to GitHub Repository
 https://github.com/kesjoberg/note-taker
